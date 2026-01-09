@@ -1,0 +1,74 @@
+<input type="hidden" id="memberYn" value="{{memberId}}" />
+{{#layout}}
+<div class="sub_ct_box">
+	<div class="g-title-area">
+		<h2 class="g-heading-l"><strong>증명서발급안내</strong></h2>
+		<div class="g-conts-area">
+			<div class="certificate-info">
+				<div class="certificate-info-box">
+					<h3>교육비 납입 증명서</h3>
+					<p>교육비를 납입했다는 증명을 할 수 있는 서류</p>
+					<p class="txt-stand">
+						<span>발급기준</span>
+						학습자가 수강신청한 과목을 결재 완료 시 발부가능
+					</p>
+				</div>
+				<div class="certificate-info-box">
+					<h3>수강 확인서</h3>
+					<p>수강 중인 과정임을 증빙하기 위한 확인서
+					</p>
+					<p class="txt-stand">
+						<span>발급기준</span>
+						교육비를 납부하고 학습을 시작한 후 발부가능
+					</p>
+				</div>
+				<div class="certificate-info-box">
+					<h3>성적증명서</h3>
+					<p>성적처리 완료 시 발급하는 성적증명서</p>
+					<p class="txt-stand">
+						<span>발급기준</span>
+						학기말 성적의 입력이 마감된 후 발급가능
+					</p>
+				</div>
+
+			</div>
+			<p class="txt-l-c">수료기준: 총점 60%이상, 출석률 80% 이상 동시 충족</p>
+			<div class="form-footer">
+				<button type="button" onclick="PageScript.doAlert();" class="btn btn-primary btn-big">증명서 발급 신청</button>
+			</div>
+		</div>
+
+	</div>
+</div>
+<script>
+
+    const PageScript = ((window, document, axios) => {
+        const contextPath = window.appGlobalObj.contextPath;
+        function onload() {
+        }
+        
+        function doAlert(){
+			var memberYn = $('#memberYn').val();
+			if(memberYn == "no"){
+				window.appGlobalAction.alert.message({
+		            title: '해당 기능은 로그인 후 사용 가능한 기능 입니다.',
+		            confirmAction: async () => {
+		            	window.location.href = "/auth/login"
+		            }
+				 });	
+			}else{
+				window.location.href = "/client/mypage/certificate";
+			}
+			
+		}
+        return {
+            onload: onload,
+            doAlert:doAlert,
+        }
+    })(window, document, axios);
+
+    window.appGlobalObj.onloadActions.push(PageScript.onload);
+</script>
+
+{{/layout}}
+

@@ -1,0 +1,36 @@
+# VectorDB ETL Pipeline Dependencies
+# Note: Consider using uv and pyproject.toml for dependency management
+# Installation: uv sync
+
+# Core
+langchain>=0.1.0
+langchain-community>=0.0.38
+langchain-core>=0.1.0
+langchain-text-splitters>=0.0.1
+
+# Vector Database
+pymilvus>=2.4.0
+
+# Embeddings
+sentence-transformers>=2.2.0
+torch>=2.0.0
+transformers>=4.30.0
+
+# HTML Processing
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Data Processing
+numpy>=1.24.0
+
+# Visualization (optional)
+matplotlib>=3.7.0
+
+# Airflow (optional - for orchestration)
+# apache-airflow>=2.7.0
+
+# CLI
+argparse
+
+# Utilities
+python-dateutil>=2.8.0

@@ -1,0 +1,72 @@
+<input type="hidden" id="memberYn" value="{{memberId}}" />
+{{#layout}}
+<!--<link rel="stylesheet" type="text/css" href="{{springMacroRequestContext.request.contextPath}}/css/st_english.css">-->
+<div class="sub_ct_box">
+	<div class="g-title-area">
+		<h2 class="g-heading-l"><span>Course Information</span><strong>Certificate Issuance Guide</strong></h2>
+		<div class="g-conts-area">
+			<div class="certificate-info">
+				<div class="certificate-info-box">
+					<h3>Certificate of payment for education expenses</h3>
+					<p>Document to prove the payment of educational expenses</p>
+					<p class="txt-stand">
+						<span>Issuance criteria</span>
+						Can be issued upon completion of payment for subjects registered by learners
+					</p>
+				</div>
+				<div class="certificate-info-box">
+					<h3>Course confirmation</h3>
+					<p>Confirmation to prove that you are taking the course</p>
+					<p class="txt-stand">
+						<span>Issuance criteria</span>
+						Can be issued after paying the training fee and starting learning
+					</p>
+				</div>
+				<div class="certificate-info-box">
+					<h3>Transcript</h3>
+					<p>A transcript issued upon completion of the transcript</p>
+					<p class="txt-stand">
+						<span>Issuance criteria</span>
+						 Can be issued after the end of the semester grade is entered
+					</p>
+				</div>
+
+			</div>
+			<p class="txt-l-c">Completion criteria: 60% or more in total and 80% or more in attendance at the same time</p>
+			<div class="form-footer">
+				<button type="button" onclick="PageScript.doAlert();" class="btn btn-primary btn-big">Application for Certificate Issuance</button>
+			</div>
+		</div>
+
+	</div>
+</div>
+{{/layout}}
+<script>
+
+    const PageScript = ((window, document, axios) => {
+        const contextPath = window.appGlobalObj.contextPath;
+        function onload() {
+        }
+        
+        function doAlert(){
+			var memberYn = $('#memberYn').val();
+			if(memberYn == "no"){
+				window.appGlobalAction.alert.message({
+		            title: '해당 기능은 로그인 후 사용 가능한 기능 입니다.',
+		            confirmAction: async () => {
+		            	window.location.href = "/auth/login"
+		            }
+				 });	
+			}else{
+				window.location.href = "/client/mypage/certificate";
+			}
+			
+		}
+        return {
+            onload: onload,
+            doAlert:doAlert,
+        }
+    })(window, document, axios);
+
+    window.appGlobalObj.onloadActions.push(PageScript.onload);
+</script>

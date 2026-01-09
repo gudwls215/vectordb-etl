@@ -1,0 +1,73 @@
+{{#layout}}
+<!--<link rel="stylesheet" type="text/css" href="{{springMacroRequestContext.request.contextPath}}/css/st_english.css">-->
+<div class="sub_ct_box">
+	<div class="g-title-area">
+		<h2 class="g-heading-l"><span>Course</span><strong>Enter membership information</strong></h2>
+		<div class="g-conts-area">
+			<ol class="step-list">
+				<li><span>Consent to the provision and use of personal information</span></li>
+				<li class="active"><span>Enter membership information</span></li>
+				<li><span>Application for classes</span></li>
+			</ol>
+			<div class="co-info-wrap">
+				<div class="form-member">
+					<div class="form-label">Name <b class="text-ess">*</b></div>
+					<div class="form-group">
+						<input type="text" class="form-control" placeholder="Input your name, please">
+					</div>
+					<div class="form-label">E-mail <b class="text-ess">*</b></div>
+					<div class="form-group">
+						<div class="form-row">
+							<div class="col-7 col-lg-auto">
+								<input type="text" class="form-control size-sm" title="이메일 ID" name="email"
+									maxlength="20" placeholder="Input your e-mail, please">
+							</div>
+							<span class="mx-1 align-self-center">@</span>
+							<div class="col col-lg-auto">
+								<select class="form-control email-select" name="email">
+									<option value="">Enter directly</option>
+									<option value="naver.com">naver.com</option>
+									<option value="gmail.com">gmail.com</option>
+									<option value="nate.com">nate.com</option>
+									<option value="daum.net">daum.net</option>
+								</select>
+							</div>
+							<div class="mt-2 mt-lg-0 col-lg-auto">
+								<input type="text" class="form-control size-sm" name="email" maxlength="30" disabled>
+							</div>
+						</div>
+					</div>
+					<div class="form-label">Password <b class="text-ess">*</b></div>
+					<div class="form-group">
+						<input type="password" class="form-control" placeholder="Input your password, please">
+						<p class="invalid-feedback">* Please enter at least 8 characters consisting of 3 types of English expert, numbers, and special characters.</p>
+					</div>
+					<div class="form-label">Confirm Password <b class="text-ess">*</b></div>
+					<div class="form-group">
+						<input type="password" class="form-control" placeholder="Input your password, please">
+					</div>
+					<div class="form-label">Telephone<b class="text-ess">*</b></div>
+					<div class="form-row">
+						<div class="col col-lg-auto">
+							<input type="text" class="form-control size-xs" title="휴대폰 번호 첫번째 자리">
+						</div>
+						<span class="mx-1 align-self-center">-</span>
+						<div class="col col-lg-auto">
+							<input type="text" class="form-control size-xs" title="휴대폰 번호 가운데 자리">
+						</div>
+						<span class="mx-1 align-self-center">-</span>
+						<div class="col col-lg-auto">
+							<input type="text" class="form-control size-xs" title="휴대폰 번호 마지막 자리">
+						</div>
+					</div>
+				</div>
+				<div class="form-footer">
+					<button type="button" class="btn btn-dark">Next</button>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+{{/layout}}

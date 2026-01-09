@@ -1,0 +1,12 @@
+{
+  "total_chunks": 146,
+  "vector_count": 0,
+  "in_range_ratio": 0.0,
+  "avg_char_size": 542.3424657534247,
+  "avg_token_size": 135.22602739726028,
+  "cv": 43.58665737397002,
+  "recommendations": [
+    "⚠️ 목표 범위 내 청크 비율이 낮습니다. chunk_size 파라미터 조정을 권장합니다.",
+    "✅ 청크 크기가 일관적입니다."
+  ]
+}
