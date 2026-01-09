@@ -114,3 +114,6 @@ docker-compose.override.yml
 # Local configuration
 user.yaml
 local_config.yaml
+
+/data
+/html
