@@ -277,6 +277,19 @@ report = monitor.generate_report()
 
 ## 🐳 Docker 지원 (선택사항)
 
+PowerShell 또는 Windows 명령 프롬프트에서 다음 명령을 실행하여 Milvus Standalone용 Docker Compose 구성 파일을 다운로드하고 Milvus를 시작
+
+```bash
+# Download the configuration file and rename it as docker-compose.yml
+C:\>Invoke-WebRequest https://github.com/milvus-io/milvus/releases/download/v2.6.8/milvus-standalone-docker-compose.yml -OutFile docker-compose.yml
+
+# Start Milvus
+C:\>docker compose up -d
+Creating milvus-etcd  ... done
+Creating milvus-minio ... done
+Creating milvus-standalone ... done
+```
+
 Milvus 서버 실행:
 
 ```bash
@@ -289,6 +302,7 @@ docker run -d --name milvus \
     -p 9091:9091 \
     milvusdb/milvus:latest
 ```
+
 
 ## � 개발 도구
 
