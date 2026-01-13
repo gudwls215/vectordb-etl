@@ -206,7 +206,7 @@ class PipelineRunner:
         
         return report
     
-    def search(self, query: str, k: int = 3, language: Optional[str] = None) -> None:
+    def search(self, query: str, k: int = 3, language: Optional[str] = None, collection: Optional[str] = None) -> None:
         """
         검색 테스트
         """
@@ -217,38 +217,49 @@ class PipelineRunner:
         print(f"\n쿼리: '{query}'")
         if language:
             print(f"언어 필터: {language}")
+        if collection:
+            print(f"컬렉션: {collection}")
+        else:
+            print("모든 컬렉션에서 검색")
         
         results = search_with_scores(
             query=query,
             k=k,
             filter_language=language,
-            auto_detect_language=(language is None)
+            auto_detect_language=(language is None),
+            collection_name=collection,
+            search_all_collections=(collection is None)
         )
         
         print_search_results(results)
     
     def reset(self, confirm: bool = False) -> None:
         """
-        벡터 DB 초기화
+        벡터 DB 초기화 (모든 컬렉션 삭제)
         """
         print("\n" + "=" * 60)
         print("🗑️ RESET: 벡터 DB 초기화")
         print("=" * 60)
         
         vectorstore = get_vector_store()
-        stats = vectorstore.get_collection_stats()
         
-        if stats.get('exists'):
-            print(f"\n컬렉션: {stats.get('collection_name')}")
-            print(f"벡터 수: {stats.get('row_count', 0)}")
+        # 모든 컬렉션 목록 가져오기
+        all_collections = vectorstore.client.list_collections()
+        
+        if all_collections:
+            print(f"\n발견된 컬렉션: {len(all_collections)}개")
+            for coll_name in all_collections:
+                print(f"  - {coll_name}")
             
             if confirm:
-                vectorstore.drop_collection()
-                print("\n✅ 컬렉션이 삭제되었습니다.")
+                for coll_name in all_collections:
+                    vectorstore.client.drop_collection(coll_name)
+                    print(f"✅ 삭제됨: {coll_name}")
+                print("\n✅ 모든 컬렉션이 삭제되었습니다.")
             else:
                 print("\n⚠️ 삭제하려면 --confirm 옵션을 추가하세요.")
         else:
-            print("ℹ️ 삭제할 컬렉션이 없습니다.")
+            print("\nℹ️ 삭제할 컬렉션이 없습니다.")
         
         # 중간 파일 삭제
         if confirm:
@@ -393,7 +404,7 @@ Examples:
     elif args.stage == "search":
         if not args.query:
             parser.error("--query 옵션이 필요합니다.")
-        runner.search(args.query, k=args.k, language=args.language)
+        runner.search(args.query, k=args.k, language=args.language, collection=args.collection)
     elif args.stage == "reset":
         runner.reset(confirm=args.confirm)
 

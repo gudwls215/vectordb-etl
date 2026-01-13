@@ -38,6 +38,8 @@ def search(
     k: int = 3, 
     filter_language: Optional[str] = None, 
     auto_detect_language: bool = True,
+    collection_name: Optional[str] = None,
+    search_all_collections: bool = False,
     vectorstore: Optional[MilvusVectorStore] = None,
     config: Optional[PipelineConfig] = None
 ) -> List[Document]:
@@ -54,7 +56,13 @@ def search(
     filter_expr = f'language == "{filter_language}"' if filter_language else None
     
     # 검색
-    results = vs.search_with_scores(query, k=k, filter_expr=filter_expr)
+    results = vs.search_with_scores(
+        query, 
+        k=k, 
+        filter_expr=filter_expr,
+        collection_name=collection_name,
+        search_all_collections=search_all_collections
+    )
     
     return [doc for doc, _ in results]
 
@@ -64,6 +72,8 @@ def search_with_scores(
     k: int = 3, 
     filter_language: Optional[str] = None, 
     auto_detect_language: bool = True,
+    collection_name: Optional[str] = None,
+    search_all_collections: bool = False,
     vectorstore: Optional[MilvusVectorStore] = None,
     config: Optional[PipelineConfig] = None
 ) -> List[Tuple[Document, float]]:
@@ -79,7 +89,13 @@ def search_with_scores(
     # 필터 표현식 생성
     filter_expr = f'language == "{filter_language}"' if filter_language else None
     
-    return vs.search_with_scores(query, k=k, filter_expr=filter_expr)
+    return vs.search_with_scores(
+        query, 
+        k=k, 
+        filter_expr=filter_expr,
+        collection_name=collection_name,
+        search_all_collections=search_all_collections
+    )
 
 
 def create_rag_prompt(

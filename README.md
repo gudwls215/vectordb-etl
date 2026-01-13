@@ -11,19 +11,38 @@ vectordb-etl/
 │   ├── config.py             # 설정 관리 (Milvus, Chunker, Embedding)
 │   ├── embeddings.py         # BGE-M3 임베딩 클래스
 │   ├── text_cleaner.py       # 텍스트 정제
-│   ├── html_loader.py        # HTML 파일 로더
+│   ├── html_loader.py        # HTML/JSP 파일 로더 (재귀 로딩 지원)
 │   ├── chunker.py            # 의미 기반 문서 분할
-│   ├── milvus_store.py       # Milvus 벡터 저장소
+│   ├── milvus_store.py       # Milvus 벡터 저장소 (폴더별 컬렉션 분리)
 │   ├── quality_monitor.py    # 품질 검증
-│   └── search_utils.py       # 검색 유틸리티
+│   └── search_utils.py       # 검색 유틸리티 (다중 컬렉션 지원)
 ├── dags/
 │   └── vectordb_etl_dag.py   # Airflow DAG
-├── html/                      # HTML 소스 파일
+├── html/                      # HTML/JSP 소스 파일
+│   ├── lms/                   # LMS 관련 파일 → docs_lms 컬렉션
+│   ├── compa/                 # 회사 관련 파일 → docs_compa 컬렉션
+│   └── ...                    # 기타 폴더 → 각각의 컬렉션
 ├── data/                      # 중간 결과 및 DB 파일
 ├── main.py                    # CLI 실행 스크립트
 ├── requirements.txt           # 의존성
 └── README.md                  # 문서
 ```
+
+## ✨ 주요 기능
+
+### 1. 폴더별 컬렉션 자동 분리
+- `html/` 하위의 각 폴더가 별도의 Milvus 컬렉션으로 저장됩니다
+- 예: `html/lms/` → `docs_lms` 컬렉션
+- 예: `html/compa/` → `docs_compa` 컬렉션
+
+### 2. HTML/JSP 파일 통합 지원
+- HTML 파일뿐만 아니라 JSP 파일도 자동으로 로드
+- 재귀적으로 하위 폴더 탐색
+
+### 3. 다중 컬렉션 검색
+- 모든 컬렉션에서 동시 검색 가능
+- 특정 컬렉션만 지정하여 검색 가능
+- 언어별 자동 필터링 지원
 
 ## 🚀 설치
 
@@ -110,14 +129,24 @@ uv run python main.py --stage validate
 ### 검색 테스트
 
 ```bash
-# 언어 자동 감지
+# 모든 컬렉션에서 검색 (언어 자동 감지)
 uv run python main.py --stage search --query "서울 사무실 주소"
+
+# 특정 컬렉션에서만 검색
+uv run python main.py --stage search --query "organization" --collection docs_lms
 
 # 언어 필터 지정
 uv run python main.py --stage search --query "Seoul office address" --language english
 
 # 결과 수 지정
 uv run python main.py --stage search --query "수강신청" --k 5
+```
+
+### 컬렉션 목록 확인
+
+```bash
+# Python으로 컬렉션 확인
+uv run python check_collections.py
 ```
 
 ### 벡터 DB 초기화

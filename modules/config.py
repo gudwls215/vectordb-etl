@@ -17,6 +17,7 @@ class MilvusConfig:
     host: str = "localhost"
     port: int = 19530
     collection_name: str = "html_documents"
+    collection_prefix: str = "docs_"  # 폴더별 컬렉션 접두사
     index_type: str = "IVF_FLAT"  # IVF_FLAT, HNSW, IVF_SQ8
     metric_type: str = "COSINE"   # L2, IP, COSINE
     nlist: int = 128              # IVF 클러스터 수
@@ -31,6 +32,14 @@ class MilvusConfig:
         if self.uri is None:
             # 기본값: 로컬 파일 기반 Milvus Lite
             self.uri = os.path.join(DATA_DIR, "milvus_vectordb.db")
+    
+    def get_collection_name(self, folder_name: Optional[str] = None) -> str:
+        """폴더명에 따른 컬렉션 이름 생성"""
+        if folder_name and folder_name != 'root':
+            # 폴더명을 소문자로 변환하고 특수문자 제거
+            clean_name = folder_name.lower().replace('-', '_').replace(' ', '_')
+            return f"{self.collection_prefix}{clean_name}"
+        return self.collection_name
     
     def get_connection_params(self) -> Dict[str, Any]:
         """연결 파라미터 반환"""
