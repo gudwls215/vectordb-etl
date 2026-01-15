@@ -92,10 +92,10 @@ logs/
 dags/__pycache__/
 
 # Debug files
-debug_*.py
+#debug_*.py
 debug_*.txt
 check_*.py
-test_*.py
+#test_*.py
 
 # Model cache
 .cache/
