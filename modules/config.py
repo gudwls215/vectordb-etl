@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any
 # 기본 디렉토리 설정
 CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML_DIR = os.path.join(CUR_DIR, 'html')
+HWP_DIR = os.path.join(CUR_DIR, 'hwp')
 DATA_DIR = os.path.join(CUR_DIR, 'data')
 
 
@@ -17,7 +18,7 @@ class MilvusConfig:
     host: str = "localhost"
     port: int = 19530
     collection_name: str = "html_documents"
-    collection_prefix: str = "docs_"  # 폴더별 컬렉션 접두사
+    collection_prefix: str = "html_"  # 폴더별 컬렉션 접두사
     index_type: str = "IVF_FLAT"  # IVF_FLAT, HNSW, IVF_SQ8
     metric_type: str = "COSINE"   # L2, IP, COSINE
     nlist: int = 128              # IVF 클러스터 수
@@ -62,10 +63,21 @@ class EmbeddingConfig:
 @dataclass
 class ChunkerConfig:
     """청크 분할 설정"""
-    target_chunk_size: int = 800    # 문자 기준
-    chunk_overlap: int = 150        # 오버랩 문자 수
-    min_chunk_size: int = 100
-    max_chunk_size: int = 1200
+    # 하이브리드 청킹 모드: semantic_first, character_only
+    # semantic_first: 1단계 시맨틱 분할 → 2단계 문자 기준 분할/병합
+    # character_only: 문자 기준만 사용
+    chunking_mode: str = "semantic_first"
+    
+    # 시맨틱 청킹 설정
+    breakpoint_threshold_type: str = "percentile"  # percentile, standard_deviation, interquartile
+    breakpoint_threshold_amount: float = 70  # 낮을수록 더 많이 분할
+    
+    # 문자 기준 분할 설정
+    target_chunk_size: int = 300    # 목표 청크 크기 (문자)
+    chunk_overlap: int = 60         # 오버랩 문자 수
+    min_chunk_size: int = 100       # 최소 청크 크기 (이보다 작으면 병합)
+    max_chunk_size: int = 500       # 최대 청크 크기 (이보다 크면 추가 분할)
+    
     separators: list = field(default_factory=lambda: [
         "\n\n\n",      # 섹션 구분
         "\n\n",        # 문단 구분
@@ -84,8 +96,10 @@ class ChunkerConfig:
 class PipelineConfig:
     """전체 파이프라인 설정"""
     html_dir: str = field(default_factory=lambda: HTML_DIR)
+    hwp_dir: str = field(default_factory=lambda: HWP_DIR)
     data_dir: str = field(default_factory=lambda: DATA_DIR)
     html_glob_pattern: str = field(default="*.html")
+    hwp_glob_pattern: str = field(default="*.hwp")
     
     # 중복 제거 설정
     duplicate_similarity_threshold: float = field(default=0.95)
@@ -116,14 +130,14 @@ def create_config(
     milvus_uri: Optional[str] = None,
     collection_name: str = "html_documents",
     embedding_model: str = "BAAI/bge-m3",
-    chunk_size: int = 800,
-    chunk_overlap: int = 150,
+    chunk_size: int = 300,
+    chunk_overlap: int = 60,
     html_dir: str = HTML_DIR,
 ) -> PipelineConfig:
     """커스텀 설정 생성"""
     milvus_config = MilvusConfig(
         collection_name=collection_name,
-        uri=milvus_uri,
+        uri=milvus_uri if milvus_uri else "http://localhost:19530",
     )
     
     embedding_config = EmbeddingConfig(

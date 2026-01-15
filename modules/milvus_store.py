@@ -180,6 +180,8 @@ class MilvusVectorStore:
         batch_size: int = 100
     ) -> int:
         """특정 컬렉션에 문서 삽입"""
+        print(f"📝 _insert_to_collection 시작: collection={collection_name}, documents={len(documents)}개")
+        
         # 컬렉션 존재 확인 및 생성
         if not self.client.has_collection(collection_name):
             self._create_collection_by_name(collection_name)
@@ -189,10 +191,13 @@ class MilvusVectorStore:
         # 배치 처리
         for i in range(0, len(documents), batch_size):
             batch = documents[i:i + batch_size]
+            print(f"  배치 {i//batch_size + 1}: {len(batch)}개 문서 처리 중...")
             
             # 텍스트 임베딩
             texts = [doc.page_content for doc in batch]
+            print(f"  임베딩 생성 중... (texts={len(texts)}개)")
             embeddings = self.embeddings.embed_documents(texts)
+            print(f"  임베딩 생성 완료: {len(embeddings)}개")
             
             # 데이터 준비
             data = []
@@ -211,13 +216,21 @@ class MilvusVectorStore:
                 }
                 data.append(record)
             
+            print(f"  데이터 레코드 준비 완료: {len(data)}개")
+            
             # 삽입
+            print(f"  Milvus에 삽입 중...")
             result = self.client.insert(
                 collection_name=collection_name,
                 data=data
             )
+            print(f"  삽입 결과: {result}")
             total_inserted += len(data)
         
+        # 데이터 flush (디스크에 커밋)
+        print(f"  데이터 flush 중...")
+        self.client.flush(collection_name)
+        print(f"✅ _insert_to_collection 완료: total_inserted={total_inserted}")
         return total_inserted
     
     def search(
@@ -377,6 +390,13 @@ class MilvusVectorStore:
         
         if not self.client.has_collection(coll_name):
             return {"exists": False, "collection_name": coll_name}
+        
+        # 최신 통계를 위해 flush와 load 수행
+        try:
+            self.client.flush(coll_name)
+            self.client.load_collection(coll_name)
+        except Exception as e:
+            print(f"⚠️ flush/load 경고: {e}")
         
         stats = self.client.get_collection_stats(coll_name)
         return {

@@ -108,6 +108,9 @@ pip install -e .
 
 ```bash
 uv run python main.py --stage all
+
+# HWP 전체 파이프라인
+uv run python main.py --stage all-hwp
 ```
 
 ### 단계별 실행
@@ -124,6 +127,11 @@ uv run python main.py --stage load
 
 # 4. Validate: 품질 검증
 uv run python main.py --stage validate
+
+# HWP 단계별 실행
+uv run python main.py --stage extract-hwp
+uv run python main.py --stage transform-hwp
+uv run python main.py --stage load-hwp
 ```
 
 ### 검색 테스트
@@ -133,7 +141,7 @@ uv run python main.py --stage validate
 uv run python main.py --stage search --query "서울 사무실 주소"
 
 # 특정 컬렉션에서만 검색
-uv run python main.py --stage search --query "organization" --collection docs_lms
+uv run python main.py --stage search --query "딥사이언스 창업 활성화" --collection hwp_compa
 
 # 언어 필터 지정
 uv run python main.py --stage search --query "Seoul office address" --language english
@@ -146,7 +154,7 @@ uv run python main.py --stage search --query "수강신청" --k 5
 
 ```bash
 # Python으로 컬렉션 확인
-uv run python check_collections.py
+uv run python test/check_collections.py
 ```
 
 ### 벡터 DB 초기화

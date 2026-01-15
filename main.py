@@ -37,6 +37,8 @@ from modules import (
     get_config,
     create_config,
     load_html_documents,
+    load_hwp_documents,
+    get_hwp_folders,
     chunk_documents,
     get_vector_store,
     reset_vector_store,
@@ -46,6 +48,7 @@ from modules import (
     print_search_results,
     create_rag_prompt,
     DATA_DIR,
+    MilvusVectorStore,
 )
 
 
@@ -57,9 +60,13 @@ class PipelineRunner:
         self.data_dir = Path(self.config.data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
-        # 중간 결과 저장 경로
+        # 중간 결과 저장 경로 (HTML)
         self.documents_path = self.data_dir / "documents.pkl"
         self.chunks_path = self.data_dir / "chunks.pkl"
+        
+        # 중간 결과 저장 경로 (HWP)
+        self.hwp_documents_path = self.data_dir / "hwp_documents.pkl"
+        self.hwp_chunks_path = self.data_dir / "hwp_chunks.pkl"
         
     def extract(self) -> List:
         """
@@ -263,10 +270,168 @@ class PipelineRunner:
         
         # 중간 파일 삭제
         if confirm:
-            for path in [self.documents_path, self.chunks_path]:
+            for path in [self.documents_path, self.chunks_path, 
+                        self.hwp_documents_path, self.hwp_chunks_path]:
                 if path.exists():
                     path.unlink()
                     print(f"삭제됨: {path}")
+    
+    def extract_hwp(self) -> List:
+        """
+        HWP Extract 단계: HWP 파일에서 문서 추출
+        """
+        print("\n" + "=" * 60)
+        print("📂 HWP EXTRACT: HWP 파일 로드")
+        print("=" * 60)
+        
+        documents = load_hwp_documents(
+            directory=self.config.hwp_dir,
+            recursive=True,
+            config=self.config
+        )
+        
+        print(f"\n로드된 문서 수: {len(documents)}")
+        
+        # 폴더별 분류
+        folder_docs = {}
+        for doc in documents:
+            folder = doc.metadata.get('folder_name', 'root')
+            folder_docs.setdefault(folder, []).append(doc)
+        
+        print("\n폴더별 문서 수:")
+        for folder, docs in sorted(folder_docs.items()):
+            print(f"  - {folder}: {len(docs)}개")
+        
+        if documents:
+            print(f"\n첫 번째 문서 메타데이터:")
+            for key, value in documents[0].metadata.items():
+                print(f"  {key}: {value}")
+        
+        # 중간 결과 저장
+        with open(self.hwp_documents_path, 'wb') as f:
+            pickle.dump(documents, f)
+        print(f"\n문서 저장 완료: {self.hwp_documents_path}")
+        
+        return documents
+    
+    def transform_hwp(self, documents: Optional[List] = None) -> List:
+        """
+        HWP Transform 단계: 문서를 청크로 분할
+        """
+        print("\n" + "=" * 60)
+        print("🔄 HWP TRANSFORM: 문서 청킹")
+        print("=" * 60)
+        
+        # 이전 단계 결과 로드
+        if documents is None:
+            if self.hwp_documents_path.exists():
+                with open(self.hwp_documents_path, 'rb') as f:
+                    documents = pickle.load(f)
+                print(f"저장된 문서 로드: {len(documents)}개")
+            else:
+                raise FileNotFoundError(
+                    f"문서 파일을 찾을 수 없습니다: {self.hwp_documents_path}\n"
+                    "먼저 extract-hwp 단계를 실행하세요."
+                )
+        
+        # 청킹
+        chunks = chunk_documents(
+            documents,
+            config=self.config.chunker,
+            remove_duplicates=True,
+            similarity_threshold=self.config.duplicate_similarity_threshold
+        )
+        
+        # 폴더별 분류
+        folder_chunks = {}
+        for chunk in chunks:
+            folder = chunk.metadata.get('folder_name', 'root')
+            folder_chunks.setdefault(folder, []).append(chunk)
+        
+        print("\n폴더별 청크 수:")
+        for folder, ch in sorted(folder_chunks.items()):
+            print(f"  - {folder}: {len(ch)}개")
+        
+        # 중간 결과 저장
+        with open(self.hwp_chunks_path, 'wb') as f:
+            pickle.dump(chunks, f)
+        print(f"\n청크 저장 완료: {self.hwp_chunks_path}")
+        
+        return chunks
+    
+    def load_hwp(self, chunks: Optional[List] = None) -> None:
+        """
+        HWP Load 단계: 폴더별로 별도 Milvus 컬렉션에 저장
+        """
+        print("\n" + "=" * 60)
+        print("💾 HWP LOAD: Milvus 벡터 저장 (폴더별 컬렉션)")
+        print("=" * 60)
+        
+        # 이전 단계 결과 로드
+        if chunks is None:
+            if self.hwp_chunks_path.exists():
+                with open(self.hwp_chunks_path, 'rb') as f:
+                    chunks = pickle.load(f)
+                print(f"저장된 청크 로드: {len(chunks)}개")
+            else:
+                raise FileNotFoundError(
+                    f"청크 파일을 찾을 수 없습니다: {self.hwp_chunks_path}\n"
+                    "먼저 transform-hwp 단계를 실행하세요."
+                )
+        
+        # 폴더별 분류
+        folder_chunks = {}
+        for chunk in chunks:
+            folder = chunk.metadata.get('folder_name', 'root')
+            folder_chunks.setdefault(folder, []).append(chunk)
+        
+        # 폴더별로 저장
+        for folder_name, folder_chunk_list in folder_chunks.items():
+            collection_name = f"hwp_{folder_name.lower().replace('-', '_').replace(' ', '_')}"
+            
+            print(f"\n📁 폴더 '{folder_name}' -> 컬렉션 '{collection_name}'")
+            
+            # 해당 폴더용 Milvus 설정 생성
+            from modules import MilvusConfig
+            milvus_config = MilvusConfig(
+                collection_name=collection_name,
+                uri=self.config.milvus.uri,
+            )
+            
+            # 벡터 저장소 생성
+            vectorstore = MilvusVectorStore(config=milvus_config)
+            
+            vectorstore.create_collection(drop_existing=True)
+            vectorstore.insert_documents(folder_chunk_list, split_by_folder=False)
+            
+            stats = vectorstore.get_collection_stats()
+            print(f"  저장 완료: {stats.get('row_count', 'N/A')}개 벡터")
+    
+    def run_all_hwp(self) -> None:
+        """
+        HWP 전체 파이프라인 실행
+        """
+        print("\n" + "=" * 60)
+        print("🚀 HWP 전체 파이프라인 실행")
+        print("=" * 60)
+        
+        start_time = datetime.now()
+        
+        # Extract
+        documents = self.extract_hwp()
+        
+        # Transform
+        chunks = self.transform_hwp(documents)
+        
+        # Load
+        self.load_hwp(chunks)
+        
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+        
+        print("\n" + "=" * 60)
+        print(f"✅ HWP 파이프라인 완료! (소요 시간: {duration:.1f}초)")
+        print("=" * 60)
     
     def run_all(self) -> None:
         """
@@ -304,18 +469,27 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    # 전체 파이프라인
+    # HTML 전체 파이프라인
     python main.py --stage all
     
-    # 단계별 실행
+    # HTML 단계별 실행
     python main.py --stage extract
     python main.py --stage transform
     python main.py --stage load
     python main.py --stage validate
     
+    # HWP 전체 파이프라인 (폴더별 컬렉션 분리)
+    python main.py --stage all-hwp
+    
+    # HWP 단계별 실행
+    python main.py --stage extract-hwp
+    python main.py --stage transform-hwp
+    python main.py --stage load-hwp
+    
     # 검색 테스트
     python main.py --stage search --query "서울 사무실 주소"
     python main.py --stage search --query "address" --language english
+    python main.py --stage search --query "계약서" --collection hwp_contracts
     
     # 벡터 DB 초기화
     python main.py --stage reset --confirm
@@ -326,7 +500,8 @@ Examples:
         "--stage",
         type=str,
         required=True,
-        choices=["all", "extract", "transform", "load", "validate", "search", "reset"],
+        choices=["all", "extract", "transform", "load", "validate", "search", "reset",
+                 "all-hwp", "extract-hwp", "transform-hwp", "load-hwp"],
         help="실행할 파이프라인 단계"
     )
     
@@ -360,6 +535,12 @@ Examples:
         "--html-dir",
         type=str,
         help="HTML 파일 디렉토리 경로"
+    )
+    
+    parser.add_argument(
+        "--hwp-dir",
+        type=str,
+        help="HWP 파일 디렉토리 경로"
     )
     
     parser.add_argument(
@@ -407,6 +588,15 @@ Examples:
         runner.search(args.query, k=args.k, language=args.language, collection=args.collection)
     elif args.stage == "reset":
         runner.reset(confirm=args.confirm)
+    # HWP 파이프라인
+    elif args.stage == "all-hwp":
+        runner.run_all_hwp()
+    elif args.stage == "extract-hwp":
+        runner.extract_hwp()
+    elif args.stage == "transform-hwp":
+        runner.transform_hwp()
+    elif args.stage == "load-hwp":
+        runner.load_hwp()
 
 
 if __name__ == "__main__":

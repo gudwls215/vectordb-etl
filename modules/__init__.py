@@ -11,6 +11,7 @@ from .config import (
     create_config,
     CUR_DIR,
     HTML_DIR,
+    HWP_DIR,
     DATA_DIR,
 )
 
@@ -29,6 +30,12 @@ from .text_cleaner import (
 from .html_loader import (
     StructuredHTMLLoader,
     load_html_documents,
+)
+
+from .hwp_loader import (
+    StructuredHWPLoader,
+    load_hwp_documents,
+    get_hwp_folders,
 )
 
 from .chunker import (
@@ -68,6 +75,7 @@ __all__ = [
     'create_config',
     'CUR_DIR',
     'HTML_DIR',
+    'HWP_DIR',
     'DATA_DIR',
     
     # Embeddings
@@ -83,6 +91,11 @@ __all__ = [
     # HTML Loader
     'StructuredHTMLLoader',
     'load_html_documents',
+    
+    # HWP Loader
+    'StructuredHWPLoader',
+    'load_hwp_documents',
+    'get_hwp_folders',
     
     # Chunker
     'SemanticChunker',
